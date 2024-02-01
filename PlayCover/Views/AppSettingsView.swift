@@ -82,7 +82,8 @@ struct AppSettingsView: View {
                     .disabled(!(hasPlayTools ?? true))
                 BypassesView(settings: $viewModel.settings,
                              hasPlayTools: $hasPlayTools,
-                             hasIntrospection: viewModel.app.introspection(),
+                             hasIntrospection: viewModel.app.changeDyldLibraryPath(path: PlayApp.introspection),
+                             hasIosFrameworks: viewModel.app.changeDyldLibraryPath(path: PlayApp.iosFrameworks),
                              app: viewModel.app)
                     .tabItem {
                         Text("settings.tab.bypasses")
@@ -155,6 +156,11 @@ struct KeymappingView: View {
                     Spacer()
                     Toggle("settings.toggle.autoKM", isOn: $settings.settings.noKMOnInput)
                         .help("settings.toggle.autoKM.help")
+                }
+                HStack {
+                    Toggle("settings.toggle.enableScrollWheel", isOn: $settings.settings.enableScrollWheel)
+                        .help("settings.toggle.enableScrollWheel.help")
+                    Spacer()
                 }
                 HStack {
                     Text(String(
@@ -445,6 +451,7 @@ struct BypassesView: View {
     @Binding var hasPlayTools: Bool?
 
     @State var hasIntrospection: Bool
+    @State var hasIosFrameworks: Bool
 
     var app: PlayApp
 
@@ -487,11 +494,20 @@ struct BypassesView: View {
                     .disabled(!settings.settings.maaTools)
                     Spacer()
                 }
+                Spacer()
+                HStack {
+                    Toggle("settings.toggle.iosFrameworks", isOn: $hasIosFrameworks)
+                        .help("settings.toggle.iosFrameworks.help")
+                    Spacer()
+                }
             }
             .padding()
         }
         .onChange(of: hasIntrospection) {_ in
-            _ = app.introspection(set: hasIntrospection)
+            _ = app.changeDyldLibraryPath(set: hasIntrospection, path: PlayApp.introspection)
+        }
+        .onChange(of: hasIosFrameworks) {_ in
+            _ = app.changeDyldLibraryPath(set: hasIosFrameworks, path: PlayApp.iosFrameworks)
         }
     }
 }
@@ -618,16 +634,6 @@ struct MiscView: View {
                         }
                     }
                     Spacer()
-                    Button((hasAlias ?? true) ? "settings.removeFromLaunchpad" : "settings.addToLaunchpad") {
-                        closeView.toggle()
-                        if !(hasAlias ?? true) {
-                            app.createAlias()
-                            hasAlias = true
-                        } else {
-                            app.removeAlias()
-                            hasAlias = false
-                        }
-                    }
                 }
                 Spacer()
                     .frame(height: 20)
@@ -703,6 +709,11 @@ struct InfoView: View {
                 Text("settings.info.url")
                 Spacer()
                 Text("\(info.url.relativePath)")
+            }
+            HStack {
+                Text("settings.info.alias")
+                Spacer()
+                Text("\(PlayApp.aliasDirectory.appendingPathComponent(info.bundleIdentifier))")
             }
         }
         .listStyle(.bordered(alternatesRowBackgrounds: true))

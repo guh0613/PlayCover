@@ -43,6 +43,7 @@ struct AppSettingsData: Codable {
 
     var maaTools = false
     var maaToolsPort = 1717
+    var enableScrollWheel = true
 
     init() {}
 
@@ -75,6 +76,7 @@ struct AppSettingsData: Codable {
 
         maaTools = try container.decodeIfPresent(Bool.self, forKey: .maaTools) ?? false
         maaToolsPort = try container.decodeIfPresent(Int.self, forKey: .maaToolsPort) ?? 1717
+        enableScrollWheel = try container.decodeIfPresent(Bool.self, forKey: .enableScrollWheel) ?? true
     }
 }
 
@@ -98,16 +100,14 @@ class AppSettings {
     let settingsUrl: URL
     var openWithLLDB: Bool = false
     var openLLDBWithTerminal: Bool = true
-    var container: AppContainer?
     var settings: AppSettingsData {
         didSet {
             encode()
         }
     }
 
-    init(_ info: AppInfo, container: AppContainer?) {
+    init(_ info: AppInfo) {
         self.info = info
-        self.container = container
         settingsUrl = AppSettings.appSettingsDir.appendingPathComponent(info.bundleIdentifier)
                                                 .appendingPathExtension("plist")
         settings = AppSettingsData()
